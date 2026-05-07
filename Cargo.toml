@@ -42,7 +42,7 @@ struct QualityCheck {
     safety_score: u8,
     risk_level: String,
     mint: String,
-    dev_wallet: String,
+    
     liquidity_usd: f64,
     top_holder_percent: f64,
     tax_percentage: f64,
@@ -195,12 +195,7 @@ async fn legendary_check(
     if metadata_immutable {
         score += 10;
         notes.push("✅ Metadata immutable".into());
-    } else {
-        notes.push("⚠️ Metadata mutable".into());
-    }
-
-    // =====================================================
-    // TAX
+    }   mutable".
     // =====================================================
     let (tax_percentage, token_2022) = tax_result.unwrap_or((0.0, false));
 
@@ -208,39 +203,7 @@ async fn legendary_check(
         score += 10;
         notes.push(format!("✅ Low tax {:.1}%", tax_percentage));
     } else {
-        notes.push(format!("⚠️ High tax {:.1}%", tax_percentage));
-    }
-
-    // =====================================================
-    // AUTHORITIES
-    // =====================================================
-    let account_data = rpc.get_account_data(&mint)?;
-    let mint_state = Mint::unpack(&account_data)?;
-
-    let mint_revoked = mint_state.mint_authority.is_none();
-    let freeze_revoked = mint_state.freeze_authority.is_none();
-
-    if mint_revoked {
-        score += 20;
-        notes.push("✅ Mint revoked".into());
-    } else {
-        notes.push("⚠️ Mint active".into());
-    }
-
-    if freeze_revoked {
-        score += 20;
-        notes.push("✅ Freeze revoked".into());
-    } else {
-        notes.push("⚠️ Freeze active".into());
-    }
-
-    // =====================================================
-    // HOLDER DISTRIBUTION
-    // =====================================================
-    let top_holder_percent = holder_result.unwrap_or(100.0);
-
-    if top_holder_percent <= MAX_SAFE_TOP_HOLDER {
-        score += 5;
+        
         notes.push(format!("✅ Top holder {:.1}%", top_holder_percent));
     } else {
         notes.push(format!("⚠️ Whale concentration {:.1}%", top_holder_percent));
@@ -486,30 +449,7 @@ fn build_telegram_message(q: &QualityCheck) -> String {
 
 💰 <b>Tax:</b> {:.1}%
 
-🧠 <b>Token-2022:</b> {}
-
-{}
-
-⚠️ DYOR BEFORE ENTRY
-"#,
-        q.safety_score,
-        q.risk_level,
-        q.dev_wallet,
-        q.mint,
-        q.liquidity_usd,
-        q.top_holder_percent,
-        q.tax_percentage,
-        if q.token_2022 { "YES" } else { "NO" },
-        q.notes.join("\n")
-    )
-}
-
-async fn send_telegram(token: &str, chat_id: &str, text: &str) {
-    let url = format!("https://api.telegram.org/bot{}/sendMessage", token);
-
-    let _ = HttpClient::new()
-        .post(url)
-        .json(&serde_json::json!({
+🧠 <n!({
             "chat_id": chat_id,
             "text": text,
             "parse_mode": "HTML",
